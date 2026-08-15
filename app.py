@@ -211,6 +211,143 @@ def report():
 
     return render_template("report.html", rows=data)
 
+@app.route("/trade", methods=["GET", "POST"])
+def trade():
+    conn = get_db()
+
+    if request.method == "POST":
+        seller_est_id = int(request.form["seller_est_id"])
+        buyer_est_id = int(request.form["buyer_est_id"])
+        credit_amount = float(request.form["credit_amount"])
+        price_per_credit = float(request.form["price_per_credit"])
+        total_amount = credit_amount * price_per_credit
+
+        if seller_est_id == buyer_est_id:
+            conn.close()
+            return "Seller and buyer cannot be the same establishment."
+
+        if credit_amount <= 0 or price_per_credit < 0:
+            conn.close()
+            return "Invalid credit amount or price."
+
+        try:
+            conn.execute("INSERT INTO Credit_Transaction (seller_est_id,buyer_est_id,credit_amount,price_per_credit,total_amount) VALUES (?,?,?,?,?)", (seller_est_id,buyer_est_id,credit_amount,price_per_credit,total_amount))
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            conn.close()
+            return f"Transaction failed: {e}"
+
+        conn.close()
+        return redirect("/trade")
+
+    establishments = conn.execute("SELECT est_id,est_name FROM Establishment ORDER BY est_name").fetchall()
+
+    wallets = conn.execute("SELECT cw.est_id,e.est_name,cw.available_credit,cw.reserved_credit FROM Credit_Wallet cw JOIN Establishment e ON cw.est_id=e.est_id ORDER BY e.est_name").fetchall()
+
+    transactions = conn.execute("SELECT ct.transaction_id,s.est_name AS seller,b.est_name AS buyer,ct.credit_amount,ct.price_per_credit,ct.total_amount,ct.status,ct.created_at FROM Credit_Transaction ct JOIN Establishment s ON ct.seller_est_id=s.est_id JOIN Establishment b ON ct.buyer_est_id=b.est_id ORDER BY ct.created_at DESC").fetchall()
+
+    listings = conn.execute("SELECT cl.listing_id,cl.seller_est_id,e.est_name,cl.credit_amount,cl.remaining_credit,cl.price_per_credit,cl.status,cl.created_at FROM Credit_Listing cl JOIN Establishment e ON cl.seller_est_id=e.est_id WHERE cl.status='Active' AND cl.remaining_credit>0 ORDER BY cl.created_at DESC").fetchall()
+
+    conn.close()
+
+    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings)
+
+@app.route("/buy-credit", methods=["POST"])
+def buy_credit():
+    conn = get_db()
+
+    try:
+        listing_id = int(request.form["listing_id"])
+        buyer_est_id = int(request.form["buyer_est_id"])
+        quantity = float(request.form["quantity"])
+
+        listing = conn.execute("SELECT listing_id,seller_est_id,remaining_credit,price_per_credit,status FROM Credit_Listing WHERE listing_id=?", (listing_id,)).fetchone()
+
+        if listing is None:
+            return "Listing not found", 404
+
+        if listing["status"] != "Active":
+            return "This listing is no longer active", 400
+
+        if quantity <= 0:
+            return "Invalid quantity", 400
+
+        if quantity > listing["remaining_credit"]:
+            return "Not enough credits available in this listing", 400
+
+        if buyer_est_id == listing["seller_est_id"]:
+            return "Seller cannot buy their own listing", 400
+
+        total_amount = quantity * listing["price_per_credit"]
+
+        conn.execute("INSERT INTO Credit_Transaction (seller_est_id,buyer_est_id,credit_amount,price_per_credit,total_amount) VALUES (?,?,?,?,?)", (listing["seller_est_id"],buyer_est_id,quantity,listing["price_per_credit"],total_amount))
+
+        conn.execute("UPDATE Credit_Listing SET remaining_credit=remaining_credit-?,status=CASE WHEN remaining_credit-?=0 THEN 'Sold' ELSE 'Active' END WHERE listing_id=? AND status='Active' AND remaining_credit>=?", (quantity,quantity,listing_id,quantity))
+
+        conn.commit()
+
+        return redirect("/trade")
+
+    except Exception as e:
+        conn.rollback()
+        return str(e), 400
+
+    finally:
+        conn.close()
+
+    @app.route("/create-listing", methods=["POST"])
+def create_listing():
+    conn = get_db()
+
+    try:
+        seller_est_id = int(request.form["seller_est_id"])
+        credit_amount = float(request.form["credit_amount"])
+        price_per_credit = float(request.form["price_per_credit"])
+
+        if credit_amount <= 0 or price_per_credit <= 0:
+            return "Invalid listing values", 400
+
+        wallet = conn.execute("SELECT available_credit FROM Credit_Wallet WHERE est_id=?", (seller_est_id,)).fetchone()
+
+        if wallet is None:
+            return "Seller wallet not found", 404
+
+        if wallet["available_credit"] < credit_amount:
+            return "Insufficient credits in seller wallet", 400
+
+        conn.execute("INSERT INTO Credit_Listing (seller_est_id,credit_amount,remaining_credit,price_per_credit) VALUES (?,?,?,?)", (seller_est_id,credit_amount,credit_amount,price_per_credit))
+
+        conn.commit()
+
+        return redirect("/trade")
+
+    except Exception as e:
+        conn.rollback()
+        return str(e), 400
+
+    finally:
+        conn.close()
+
+@app.route("/transactions")
+def transactions():
+    conn = get_db()
+    transactions = conn.execute("""
+        SELECT ct.transaction_id,
+               s.est_name AS seller,
+               b.est_name AS buyer,
+               ct.credit_amount,
+               ct.price_per_credit,
+               ct.total_amount,
+               ct.status,
+               ct.created_at
+        FROM Credit_Transaction ct
+        JOIN Establishment s ON ct.seller_est_id = s.est_id
+        JOIN Establishment b ON ct.buyer_est_id = b.est_id
+        ORDER BY ct.created_at DESC
+    """).fetchall()
+    conn.close()
+    return render_template("transactions.html", transactions=transactions)
 
 if __name__ == "__main__":
     app.run(debug=True)

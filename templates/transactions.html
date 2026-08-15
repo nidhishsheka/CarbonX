@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History - CarbonX</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6f7;
+            color: #222;
+        }
+
+        header {
+            background: #2f4558;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        nav {
+            background: #2f4558;
+            padding: 12px 30px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 25px;
+            font-size: 14px;
+        }
+
+        .container {
+            width: 90%;
+            margin: 35px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #eef1f3;
+        }
+
+        .completed {
+            color: #188038;
+            font-weight: bold;
+        }
+
+        .amount {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Carbon Emission Management System</h1>
+</header>
+
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/add_establishment">Add Establishment</a>
+    <a href="/add_activity">Add Activity</a>
+    <a href="/emission_records">Emission Records</a>
+    <a href="/carbon_credit_report">Carbon Credit Report</a>
+    <a href="/trade">Trade Credits</a>
+    <a href="/transactions">Transaction History</a>
+</nav>
+
+<div class="container">
+
+    <h2>Transaction History</h2>
+    <p>Record of carbon credit transactions between establishments.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Seller</th>
+                <th>Buyer</th>
+                <th>Credits</th>
+                <th>Price / Credit</th>
+                <th>Total Value</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.transaction_id }}</td>
+                <td>{{ transaction.seller }}</td>
+                <td>{{ transaction.buyer }}</td>
+                <td>{{ transaction.credit_amount }}</td>
+                <td>₹{{ "%.2f"|format(transaction.price_per_credit) }}</td>
+                <td class="amount">
+                    ₹{{ "%.2f"|format(transaction.total_amount) }}
+                </td>
+                <td class="completed">
+                    {{ transaction.status }}
+                </td>
+                <td>{{ transaction.created_at }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8">No transactions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+</html>
