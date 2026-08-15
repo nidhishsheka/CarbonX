@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Emission Records</h2>
+
+<table>
+
+<tr>
+<th>Establishment</th>
+<th>Source</th>
+<th>Quantity</th>
+<th>Emission Factor (kg CO₂ / unit)</th>
+<th>Emission (kg CO₂)</th>
+</tr>
+
+{% for r in rows %}
+
+<tr>
+<td>{{ r.est_name }}</td>
+<td>{{ r.source_name }}</td>
+<td>{{ r.quantity }} {{ r.unit }}</td>
+<td>{{ r.factor_value }} kg CO₂ / {{ r.unit }}</td>
+<td>{{ r.emission_kg }} kg CO₂</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

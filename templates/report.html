@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Carbon Credit Report</h2>
+
+<table border="1">
+
+<tr>
+<th>Establishment</th>
+<th>Baseline Emission (kg CO₂)</th>
+<th>Sector</th>
+<th>Reduction %</th>
+<th>Allowed Limit (kg CO₂)</th>
+<th>Actual Emission (kg CO₂)</th>
+<th>Carbon Credit (tCO₂e)</th>
+<th>Status</th>
+</tr>
+
+{% for r in rows %}
+
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.baseline }} kg</td>
+<td>{{ r.sector }}</td>
+<td>{{ r.reduction }}%</td>
+<td>{{ r.allowed }} kg</td>
+<td>{{ r.actual }} kg</td>
+<td>{{ r.credit }}</td>
+<td>{{ r.status }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}
