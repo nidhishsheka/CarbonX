@@ -74,19 +74,10 @@ def add_establishment():
     return render_template("add_entity.html", sectors=sectors)
 
 
-@app.route("/add_activity", methods=["GET","POST"])
+@app.route("/add_activity", methods=["GET", "POST"])
 def add_activity():
 
-    with sqlite3.connect("cc.db") as conn:
-        conn.row_factory = sqlite3.Row
-
-    establishments = conn.execute(
-        "SELECT * FROM Establishment"
-    ).fetchall()
-
-    sources = conn.execute(
-        "SELECT * FROM Emission_Source"
-    ).fetchall()
+    conn = get_db()
 
     if request.method == "POST":
 
@@ -95,23 +86,48 @@ def add_activity():
         quantity = float(request.form["quantity"])
         period = request.form["period"]
 
-        # insert activity
-        cursor = conn.execute(
-            "INSERT INTO Activity_Data (est_id, source_id, quantity, period) VALUES (?,?,?,?)",
+        # Insert activity.
+        # The database trigger automatically creates
+        # the corresponding Emission_Record.
+        conn.execute(
+            """
+            INSERT INTO Activity_Data
+            (est_id, source_id, quantity, period)
+            VALUES (?, ?, ?, ?)
+            """,
             (est_id, source_id, quantity, period)
         )
 
-        activity_id = cursor.lastrowid
-
         conn.commit()
+        conn.close()
 
         return redirect("/emissions")
+
+    # GET request
+    establishments = conn.execute(
+        """
+        SELECT est_id, est_name
+        FROM Establishment
+        ORDER BY est_name
+        """
+    ).fetchall()
+
+    sources = conn.execute(
+        """
+        SELECT source_id, source_name
+        FROM Emission_Source
+        ORDER BY source_name
+        """
+    ).fetchall()
+
+    conn.close()
 
     return render_template(
         "add_activity.html",
         establishments=establishments,
         sources=sources
     )
+
 
 
 @app.route("/emissions")
