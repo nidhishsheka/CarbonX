@@ -249,9 +249,23 @@ def trade():
 
     listings = conn.execute("SELECT cl.listing_id,cl.seller_est_id,e.est_name,cl.credit_amount,cl.remaining_credit,cl.price_per_credit,cl.status,cl.created_at FROM Credit_Listing cl JOIN Establishment e ON cl.seller_est_id=e.est_id WHERE cl.status='Active' AND cl.remaining_credit>0 ORDER BY cl.created_at DESC").fetchall()
 
+    active_listings = conn.execute("SELECT COUNT(*) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+
+    credits_available = conn.execute("SELECT COALESCE(SUM(remaining_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+
+    average_price = conn.execute("SELECT COALESCE(AVG(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+
+    highest_price = conn.execute("SELECT COALESCE(MAX(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+
+    lowest_price = conn.execute("SELECT COALESCE(MIN(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+
+    total_trade_value = conn.execute("SELECT COALESCE(SUM(total_amount),0) FROM Credit_Transaction WHERE status='Completed'").fetchone()[0]
+
     conn.close()
 
-    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings)
+    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value)
+
+
 
 @app.route("/buy-credit", methods=["POST"])
 def buy_credit():
@@ -285,6 +299,8 @@ def buy_credit():
 
         conn.execute("UPDATE Credit_Listing SET remaining_credit=remaining_credit-?,status=CASE WHEN remaining_credit-?=0 THEN 'Sold' ELSE 'Active' END WHERE listing_id=? AND status='Active' AND remaining_credit>=?", (quantity,quantity,listing_id,quantity))
 
+        conn.execute("UPDATE Credit_Wallet SET reserved_credit=reserved_credit-?,updated_at=CURRENT_TIMESTAMP WHERE est_id=?", (quantity,listing["seller_est_id"]))
+
         conn.commit()
 
         return redirect("/trade")
@@ -296,7 +312,7 @@ def buy_credit():
     finally:
         conn.close()
 
-    @app.route("/create-listing", methods=["POST"])
+@app.route("/create-listing", methods=["POST"])
 def create_listing():
     conn = get_db()
 
@@ -308,15 +324,19 @@ def create_listing():
         if credit_amount <= 0 or price_per_credit <= 0:
             return "Invalid listing values", 400
 
-        wallet = conn.execute("SELECT available_credit FROM Credit_Wallet WHERE est_id=?", (seller_est_id,)).fetchone()
+        wallet = conn.execute("SELECT available_credit,reserved_credit FROM Credit_Wallet WHERE est_id=?", (seller_est_id,)).fetchone()
 
         if wallet is None:
             return "Seller wallet not found", 404
 
-        if wallet["available_credit"] < credit_amount:
-            return "Insufficient credits in seller wallet", 400
+        unreserved_credit = wallet["available_credit"] - wallet["reserved_credit"]
+
+        if unreserved_credit < credit_amount:
+            return "Insufficient unreserved credits", 400
 
         conn.execute("INSERT INTO Credit_Listing (seller_est_id,credit_amount,remaining_credit,price_per_credit) VALUES (?,?,?,?)", (seller_est_id,credit_amount,credit_amount,price_per_credit))
+
+        conn.execute("UPDATE Credit_Wallet SET reserved_credit=reserved_credit+?,updated_at=CURRENT_TIMESTAMP WHERE est_id=?", (credit_amount,seller_est_id))
 
         conn.commit()
 

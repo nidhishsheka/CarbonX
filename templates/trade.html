@@ -173,6 +173,42 @@
     min-width: 900px;
 }
 
+.market-analytics {
+    width: 100%;
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+.market-analytics h2 {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.analytics-card {
+    background: white;
+    padding: 22px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.analytics-card h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+
+.analytics-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
     </style>
 </head>
 
@@ -293,6 +329,42 @@
         </table>
 
     </div>
+
+    <section class="market-analytics">
+    <h2>Market Analytics</h2>
+
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <h3>Active Listings</h3>
+            <p>{{ active_listings }}</p>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Credits Available</h3>
+            <p>{{ "%.2f"|format(credits_available) }}</p>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Average Price</h3>
+            <p>₹{{ "%.2f"|format(average_price) }}</p>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Highest Price</h3>
+            <p>₹{{ "%.2f"|format(highest_price) }}</p>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Lowest Price</h3>
+            <p>₹{{ "%.2f"|format(lowest_price) }}</p>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Total Traded Value</h3>
+            <p>₹{{ "%.2f"|format(total_trade_value) }}</p>
+        </div>
+    </div>
+</section>
 
     <div class="card">
     <h2>Sell Carbon Credits</h2>
