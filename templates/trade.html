@@ -477,6 +477,29 @@
         <h2>Carbon Credit Marketplace</h2>
         <p>Available carbon credits offered for sale.</p>
 
+        <div class="analytics-card">
+    <h3> AI Market Forecast</h3>
+
+    {% if prediction.available %}
+        <p>
+            <strong>Current Price:</strong>
+            ₹{{ prediction.current_price }}
+        </p>
+
+        <p>
+            <strong>Predicted Next Price:</strong>
+            ₹{{ prediction.predicted_price }}
+        </p>
+
+        <p>
+            <strong>Model MAE:</strong>
+            ₹{{ prediction.mae }}
+        </p>
+    {% else %}
+        <p>{{ prediction.message }}</p>
+    {% endif %}
+</div>
+
         {% if listings %}
         <table>
         <thead>

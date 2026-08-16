@@ -1,5 +1,6 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect
+from ml_model import get_price_prediction
 
 app = Flask(__name__)
 
@@ -261,6 +262,8 @@ def trade():
 
     total_trade_value = conn.execute("SELECT COALESCE(SUM(total_amount),0) FROM Credit_Transaction WHERE status='Completed'").fetchone()[0]
 
+    prediction = get_price_prediction()
+
     price_history = conn.execute("SELECT created_at, price_per_credit, credit_amount, total_amount FROM Credit_Transaction WHERE status='Completed' ORDER BY created_at ASC").fetchall()
 
     price_dates = [row["created_at"] for row in price_history]
@@ -295,9 +298,56 @@ def trade():
 
     conn.close()
 
-    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value, price_history=price_history, price_dates=price_dates, price_values=price_values, market_dates=market_dates, market_prices=market_prices, current_price=current_price, price_change=price_change, market_trend=market_trend, moving_average=moving_average)
+    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value, price_history=price_history, price_dates=price_dates, price_values=price_values, market_dates=market_dates, market_prices=market_prices, current_price=current_price, price_change=price_change, market_trend=market_trend, moving_average=moving_average, prediction=prediction)
 
 
+def update_market_history(conn):
+    market = conn.execute("""
+        SELECT
+            DATE(created_at) AS trade_date,
+            AVG(price_per_credit) AS avg_price,
+            SUM(credit_amount) AS credits_traded,
+            SUM(total_amount) AS trade_value
+        FROM Credit_Transaction
+        WHERE status = 'Completed'
+          AND DATE(created_at) = DATE('now','localtime')
+    """).fetchone()
+
+    if market["avg_price"] is None:
+        return
+
+    active_listings = conn.execute("""
+        SELECT COUNT(*) AS count
+        FROM Credit_Listing
+        WHERE status = 'Active'
+    """).fetchone()["count"]
+
+    credits_available = conn.execute("""
+        SELECT COALESCE(SUM(remaining_credit), 0) AS credits
+        FROM Credit_Listing
+        WHERE status = 'Active'
+    """).fetchone()["credits"]
+
+    conn.execute("""
+        INSERT INTO Market_History
+        (trade_date, avg_price, credits_traded, trade_value,
+         active_listings, credits_available)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(trade_date)
+        DO UPDATE SET
+            avg_price = excluded.avg_price,
+            credits_traded = excluded.credits_traded,
+            trade_value = excluded.trade_value,
+            active_listings = excluded.active_listings,
+            credits_available = excluded.credits_available
+    """, (
+        market["trade_date"],
+        market["avg_price"],
+        market["credits_traded"],
+        market["trade_value"],
+        active_listings,
+        credits_available
+    ))
 
 @app.route("/buy-credit", methods=["POST"])
 def buy_credit():
@@ -333,6 +383,7 @@ def buy_credit():
 
         conn.execute("UPDATE Credit_Wallet SET reserved_credit=reserved_credit-?,updated_at=CURRENT_TIMESTAMP WHERE est_id=?", (quantity,listing["seller_est_id"]))
 
+        update_market_history(conn)
         conn.commit()
 
         return redirect("/trade")
