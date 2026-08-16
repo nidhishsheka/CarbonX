@@ -209,6 +209,48 @@
     font-weight: bold;
 }
 
+        .market-trend {
+    width: 100%;
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+.market-trend h2 {
+    margin-bottom: 5px;
+}
+
+.section-subtitle {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+}
+
+    .market-trend-card {
+    text-align: center;
+}
+
+.trend-value {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.market-trend-card small {
+    font-size: 13px;
+    font-weight: bold;
+}
+
     </style>
 </head>
 
@@ -364,7 +406,35 @@
             <p>₹{{ "%.2f"|format(total_trade_value) }}</p>
         </div>
     </div>
-</section>
+        <div class="analytics-card market-trend-card">
+        <h3>Market Trend</h3>
+
+        <p>
+        ₹{{ "%.2f"|format(current_price) }}
+        </p>
+
+        <span class="trend-value">
+        {% if price_change > 1 %}
+            ▲ {{ "%.2f"|format(price_change) }}%
+        {% elif price_change < -1 %}
+            ▼ {{ "%.2f"|format(price_change|abs) }}%
+        {% else %}
+            → {{ "%.2f"|format(price_change|abs) }}%
+        {% endif %}
+        </span>
+
+        <small>{{ market_trend }}</small>
+        </div>
+    </section>
+
+    <section class="market-trend">
+    <h2>Carbon Credit Price Trend</h2>
+    <p class="section-subtitle">Historical prices from completed carbon credit transactions.</p>
+
+    <div class="chart-container">
+        <canvas id="priceChart"></canvas>
+    </div>
+    </section>
 
     <div class="card">
     <h2>Sell Carbon Credits</h2>
@@ -533,6 +603,60 @@ function calculateTotal() {
 creditInput.addEventListener("input", calculateTotal);
 priceInput.addEventListener("input", calculateTotal);
 
+</script>
+
+<!-- chart.js da -->    
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const priceDates = {{ market_dates | tojson }};
+const priceValues = {{ market_prices | tojson }};
+
+const ctx = document.getElementById('priceChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: priceDates,
+        datasets: [{
+            label: 'Daily Average Price (₹)',
+            data: priceValues,
+            tension: 0.3,
+            borderWidth: 3,
+            fill: false
+        },
+        {
+            label: '3-Period Moving Average',
+            data: {{ moving_average | tojson }},
+            tension: 0.3,
+            borderWidth: 2,
+            fill: false
+        }
+    ]
+    
+    },
+
+
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: false,
+                title: {
+                    display: true,
+                    text: 'Price (₹)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Transaction Date'
+                }
+            }
+        }
+    }
+});
 </script>
 
 </body>

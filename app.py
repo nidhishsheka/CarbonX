@@ -261,9 +261,41 @@ def trade():
 
     total_trade_value = conn.execute("SELECT COALESCE(SUM(total_amount),0) FROM Credit_Transaction WHERE status='Completed'").fetchone()[0]
 
+    price_history = conn.execute("SELECT created_at, price_per_credit, credit_amount, total_amount FROM Credit_Transaction WHERE status='Completed' ORDER BY created_at ASC").fetchall()
+
+    price_dates = [row["created_at"] for row in price_history]
+    price_values = [row["price_per_credit"] for row in price_history]
+
+    daily_market = conn.execute("SELECT DATE(created_at) AS trade_date, ROUND(AVG(price_per_credit),2) AS avg_price, SUM(credit_amount) AS credits_traded, ROUND(SUM(total_amount),2) AS trade_value FROM Credit_Transaction WHERE status='Completed' GROUP BY DATE(created_at) ORDER BY trade_date ASC").fetchall()
+
+    market_dates = [row["trade_date"] for row in daily_market]
+    market_prices = [row["avg_price"] for row in daily_market]
+
+    moving_average = []
+
+    for i in range(len(market_prices)):
+        start = max(0, i - 2)
+        window = market_prices[start:i + 1]
+        moving_average.append(round(sum(window) / len(window), 2))
+
+    current_price = market_prices[-1] if market_prices else 0
+    previous_price = market_prices[-2] if len(market_prices) > 1 else current_price
+
+    if previous_price:
+        price_change = ((current_price - previous_price) / previous_price) * 100
+    else:
+        price_change = 0
+
+    if price_change > 1:
+        market_trend = "UP"
+    elif price_change < -1:
+        market_trend = "DOWN"
+    else:
+        market_trend = "STABLE"
+
     conn.close()
 
-    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value)
+    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value, price_history=price_history, price_dates=price_dates, price_values=price_values, market_dates=market_dates, market_prices=market_prices, current_price=current_price, price_change=price_change, market_trend=market_trend, moving_average=moving_average)
 
 
 
