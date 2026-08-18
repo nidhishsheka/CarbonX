@@ -189,14 +189,20 @@ def report():
 
     for r in rows:
 
-        credit = r["carbon_credit"] if r["carbon_credit"] is not None else 0
-
-        if credit > 0:
-            status = "Surplus"
-        elif credit < 0:
-            status = "Deficit"
+        if r["activity_count"] == 0:
+            credit = 0
+            actual = "No activity"
+            status = "No Activity"
         else:
-            status = "Neutral"
+            credit = r["carbon_credit"] if r["carbon_credit"] is not None else 0
+            actual = r["actual_emission"]
+
+            if credit > 0:
+                status = "Surplus"
+            elif credit < 0:
+                status = "Deficit"
+            else:
+                status = "Neutral"
 
         data.append({
           "name": r["est_name"],
@@ -204,7 +210,7 @@ def report():
           "reduction": r["reduction_percent"] or 0,
           "baseline": r["baseline_emission_kg"],
           "allowed": r["allowed_limit"],
-          "actual": r["actual_emission"],
+          "actual": actual,
           "credit": round(credit,2),
           "status": status
          })
@@ -246,7 +252,21 @@ def trade():
 
     wallets = conn.execute("SELECT cw.est_id,e.est_name,cw.available_credit,cw.reserved_credit FROM Credit_Wallet cw JOIN Establishment e ON cw.est_id=e.est_id ORDER BY e.est_name").fetchall()
 
-    transactions = conn.execute("SELECT ct.transaction_id,s.est_name AS seller,b.est_name AS buyer,ct.credit_amount,ct.price_per_credit,ct.total_amount,ct.status,ct.created_at FROM Credit_Transaction ct JOIN Establishment s ON ct.seller_est_id=s.est_id JOIN Establishment b ON ct.buyer_est_id=b.est_id ORDER BY ct.created_at DESC").fetchall()
+    transactions = conn.execute("""
+    SELECT ct.transaction_id,
+           s.est_name AS seller,
+           b.est_name AS buyer,
+           ct.credit_amount,
+           ct.price_per_credit,
+           ct.total_amount,
+           ct.status,
+           ct.created_at
+    FROM Credit_Transaction ct
+    JOIN Establishment s ON ct.seller_est_id = s.est_id
+    JOIN Establishment b ON ct.buyer_est_id = b.est_id
+    ORDER BY ct.created_at DESC
+    LIMIT 3
+""").fetchall()
 
     listings = conn.execute("SELECT cl.listing_id,cl.seller_est_id,e.est_name,cl.credit_amount,cl.remaining_credit,cl.price_per_credit,cl.status,cl.created_at FROM Credit_Listing cl JOIN Establishment e ON cl.seller_est_id=e.est_id WHERE cl.status='Active' AND cl.remaining_credit>0 ORDER BY cl.created_at DESC").fetchall()
 
@@ -298,8 +318,29 @@ def trade():
 
     conn.close()
 
-    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value, price_history=price_history, price_dates=price_dates, price_values=price_values, market_dates=market_dates, market_prices=market_prices, current_price=current_price, price_change=price_change, market_trend=market_trend, moving_average=moving_average, prediction=prediction)
+    return render_template("trade.html", establishments=establishments, wallets=wallets, listings=listings, active_listings=active_listings, credits_available=credits_available, average_price=average_price, highest_price=highest_price, lowest_price=lowest_price, total_trade_value=total_trade_value, price_history=price_history, price_dates=price_dates, price_values=price_values, market_dates=market_dates, market_prices=market_prices, current_price=current_price, price_change=price_change, market_trend=market_trend, moving_average=moving_average, prediction=prediction, transactions=transactions)
 
+@app.route("/market")
+def market():
+    conn = get_db()
+
+    market_trend = get_market_trend(conn)
+
+    market_data = conn.execute("""
+        SELECT *
+        FROM Market_History
+        ORDER BY trade_date DESC
+    """).fetchall()
+
+    conn.close()
+
+    prediction = get_price_prediction()
+
+    return render_template(
+        "market.html",
+        market_data=market_data,
+        prediction=prediction, market_trend=market_trend
+    )
 
 def update_market_history(conn):
     market = conn.execute("""
@@ -348,6 +389,47 @@ def update_market_history(conn):
         active_listings,
         credits_available
     ))
+
+def get_market_trend(conn):
+    rows = conn.execute("""
+        SELECT trade_date, avg_price, credits_traded, trade_value
+        FROM Market_History
+        ORDER BY trade_date ASC
+    """).fetchall()
+
+    if len(rows) < 2:
+        return {
+            "direction": "STABLE",
+            "price_change": 0,
+            "description": "Not enough historical data to determine market direction."
+        }
+
+    first_price = rows[0]["avg_price"]
+    latest_price = rows[-1]["avg_price"]
+
+    if first_price == 0:
+        price_change = 0
+    else:
+        price_change = ((latest_price - first_price) / first_price) * 100
+
+    if price_change > 5:
+        direction = "BULLISH"
+        description = "Carbon credit prices are trending upward."
+    elif price_change < -5:
+        direction = "BEARISH"
+        description = "Carbon credit prices are trending downward."
+    else:
+        direction = "STABLE"
+        description = "Carbon credit prices are relatively stable."
+
+    total_volume = sum(row["credits_traded"] for row in rows)
+
+    return {
+        "direction": direction,
+        "price_change": round(price_change, 2),
+        "description": description,
+        "total_volume": total_volume
+    }
 
 @app.route("/buy-credit", methods=["POST"])
 def buy_credit():

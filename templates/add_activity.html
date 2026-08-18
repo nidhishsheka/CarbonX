@@ -1,45 +1,114 @@
 {% extends "base.html" %}
 
+{% block title %}Add Activity | CarbonX{% endblock %}
+
 {% block content %}
 
-<h2>Add Activity Data</h2>
+<div class="page-header">
+    <h1>Record Activity</h1>
+    <p>Record an emission-generating activity for an establishment.</p>
+</div>
 
-<form method="POST">
+<div class="form-card">
 
-<label>Establishment</label>
-<select name="est_id">
+    <form method="POST">
 
-{% for e in establishments %}
+        <div class="form-section">
 
-<option value="{{ e.est_id }}">
-{{ e.est_name }}
-</option>
+            <h2>Activity Details</h2>
 
-{% endfor %}
+            <div class="form-group">
 
-</select>
+                <label for="est_id">Establishment</label>
 
-<label>Emission Source</label>
-<select name="source_id">
+                <select id="est_id" name="est_id" required>
 
-{% for s in sources %}
+                    <option value="" disabled selected>
+                        Select an establishment
+                    </option>
 
-<option value="{{ s.source_id }}">
-{{ s.source_name }}
-</option>
+                    {% for e in establishments %}
+                    <option value="{{ e.est_id }}">
+                        {{ e.est_name }}
+                    </option>
+                    {% endfor %}
 
-{% endfor %}
+                </select>
 
-</select>
+            </div>
 
-<label>Quantity</label>
-<input type="number" name="quantity" required>
 
-<label>Period</label>
-<input type="text" name="period" placeholder="2025" required>
+            <div class="form-group">
 
-<button type="submit">Add Activity</button>
+                <label for="source_id">Emission Source</label>
 
-</form>
+                <select id="source_id" name="source_id" required>
+
+                    <option value="" disabled selected>
+                        Select emission source
+                    </option>
+
+                    {% for s in sources %}
+                    <option value="{{ s.source_id }}">
+                        {{ s.source_name }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="quantity">Quantity</label>
+
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        placeholder="Enter quantity"
+                        min="0"
+                        step="0.01"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="period">Period</label>
+
+                    <input
+                        type="text"
+                        id="period"
+                        name="period"
+                        placeholder="e.g. 2025"
+                        required>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a href="/" class="secondary-button">
+                Cancel
+            </a>
+
+            <button type="submit">
+                Record Activity
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

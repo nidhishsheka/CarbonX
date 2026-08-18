@@ -2,24 +2,51 @@
 
 {% block content %}
 
-<h2>Dashboard</h2>
+<div class="menu-container">
 
-<div class="cards">
+    <div class="menu-header">
+        <h1>Home</h1>
+    </div>
 
-<div class="card">
-<h3>Total Establishments</h3>
-<p>{{ total_est }}</p>
-</div>
+    <div class="menu-grid">
 
-<div class="card">
-<h3>Total Activities</h3>
-<p>{{ total_act }}</p>
-</div>
+        <a href="/add_establishment" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Establishments</h2>
+            <p>Add and manage establishments</p>
+        </a>
 
-<div class="card">
-<h3>Total Emission Records</h3>
-<p>{{ total_em }}</p>
-</div>
+        <a href="/add_activity" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Activities</h2>
+            <p>Record and manage activities</p>
+        </a>
+
+        <a href="/emissions" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Emissions</h2>
+            <p>Track and calculate carbon emissions</p>
+        </a>
+
+        <a href="/report" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Reports</h2>
+            <p>View emission and environmental reports</p>
+        </a>
+
+        <a href="/trade" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Carbon Trading</h2>
+            <p>Buy and sell carbon credits</p>
+        </a>
+
+        <a href="/transactions" class="menu-card">
+            <div class="menu-icon"></div>
+            <h2>Transactions</h2>
+            <p>View completed carbon credit trades</p>
+        </a>
+
+    </div>
 
 </div>
 

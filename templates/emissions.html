@@ -1,31 +1,99 @@
 {% extends "base.html" %}
 
+{% block title %}Emission Records | CarbonX{% endblock %}
+
 {% block content %}
 
-<h2>Emission Records</h2>
+<div class="page-header">
+    <h1>Emission Records</h1>
+    <p>Review recorded activities and their calculated carbon emissions.</p>
+</div>
 
-<table>
+<div class="data-card">
 
-<tr>
-<th>Establishment</th>
-<th>Source</th>
-<th>Quantity</th>
-<th>Emission Factor (kg CO₂ / unit)</th>
-<th>Emission (kg CO₂)</th>
-</tr>
+    <div class="card-header">
+        <div>
+            <h2>Recorded Emissions</h2>
+            <p>Emission calculations based on recorded activities.</p>
+        </div>
 
-{% for r in rows %}
+        <a href="/add_activity" class="primary-button">
+            + Add Activity
+        </a>
+    </div>
 
-<tr>
-<td>{{ r.est_name }}</td>
-<td>{{ r.source_name }}</td>
-<td>{{ r.quantity }} {{ r.unit }}</td>
-<td>{{ r.factor_value }} kg CO₂ / {{ r.unit }}</td>
-<td>{{ r.emission_kg }} kg CO₂</td>
-</tr>
+    {% if rows %}
 
-{% endfor %}
+    <div class="table-container">
 
-</table>
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Establishment</th>
+                    <th>Source</th>
+                    <th>Quantity</th>
+                    <th>Emission Factor</th>
+                    <th>Emission</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for r in rows %}
+
+                <tr>
+
+                    <td>
+                        <strong>{{ r.est_name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ r.source_name }}
+                    </td>
+
+                    <td>
+                        {{ r.quantity }} {{ r.unit }}
+                    </td>
+
+                    <td>
+                        {{ r.factor_value }}
+                        kg CO₂ / {{ r.unit }}
+                    </td>
+
+                    <td>
+                        <strong>{{ r.emission_kg }}</strong>
+                        kg CO₂
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No emission records yet</h3>
+
+        <p>
+            Record an activity to start calculating emissions.
+        </p>
+
+        <a href="/add_activity" class="primary-button">
+            Add Activity
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
 
 {% endblock %}

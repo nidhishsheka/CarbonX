@@ -1,274 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Carbon Credit Trading</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .trade-container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 30px;
-        }
+{% extends "base.html" %}
 
-        .trade-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 700px;
-            margin: 0 auto 25px;
-        }
+{% block title %}Carbon Credit Marketplace | CarbonX{% endblock %}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+{% block content %}
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
+<div class="page-header">
+    <h1>Carbon Credit Marketplace</h1>
+    <p>Buy and sell verified carbon credits between establishments.</p>
+</div>
 
-        select,
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
 
-        .total-box {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f2f7f2;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: bold;
-        }
+<!-- SELL -->
 
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            background: #1f7a3f;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #155d2e;
-        }
-
-        .wallet-section {
-            margin-top: 40px;
-            width: 100%;
-            max-width: 1200px;
-            margin: 25px auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #f5f5f5;
-        }
-
-        .transaction-history {
-        width: 100%;
-        max-width: 1200px;
-        margin: 25px auto;
-        overflow-x: auto;
-}
-
-    .transaction-history table {
-        width: 100%;
-            min-width: 850px;
-        border-collapse: collapse;
-}
-
-    .transaction-history th,.transaction-history td {
-    padding: 10px 12px;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.transaction-history h2 {
-    text-align: left;
-    margin-bottom: 15px;
-}
-
-.marketplace-card {
-    width: 100%;
-    max-width: 1200px;
-    margin: 25px auto;
-    box-sizing: border-box;
-}
-
-.marketplace-card table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.marketplace-card th,.marketplace-card td {
-    padding: 12px;
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-    white-space: nowrap;
-}
-
-.marketplace-card th {
-    background: #eef1f3;
-}
-
-.marketplace-card button {
-    padding: 8px 18px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-        .marketplace-card form {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-
-.marketplace-card form select,
-.marketplace-card form input {
-    width: auto;
-    min-width: 120px;
-    padding: 8px;
-    box-sizing: border-box;
-}
-
-.marketplace-card form button {
-    width: auto;
-    min-width: 80px;
-    padding: 8px 16px;
-    white-space: nowrap;
-}
-
-.marketplace-card td:last-child {
-    min-width: 360px;
-}       
-        .marketplace-card {
-    overflow-x: auto;
-}
-
-.marketplace-card table {
-    min-width: 900px;
-}
-
-.market-analytics {
-    width: 100%;
-    max-width: 1200px;
-    margin: 30px auto;
-}
-
-.market-analytics h2 {
-    text-align: left;
-    margin-bottom: 20px;
-}
-
-.analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-}
-
-.analytics-card {
-    background: white;
-    padding: 22px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    text-align: center;
-}
-
-.analytics-card h3 {
-    margin: 0 0 10px;
-    font-size: 15px;
-}
-
-.analytics-card p {
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
-}
-
-        .market-trend {
-    width: 100%;
-    max-width: 1200px;
-    margin: 30px auto;
-}
-
-.market-trend h2 {
-    margin-bottom: 5px;
-}
-
-.section-subtitle {
-    color: #666;
-    margin-bottom: 20px;
-}
-
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    box-sizing: border-box;
-}
-
-    .market-trend-card {
-    text-align: center;
-}
-
-.trend-value {
-    display: block;
-    font-size: 18px;
-    font-weight: bold;
-    margin: 8px 0;
-}
-
-.market-trend-card small {
-    font-size: 13px;
-    font-weight: bold;
-}
-
-    </style>
-</head>
-
-<body>
-
-<div class="trade-container">
+<div class="trade-grid">
 
     <div class="trade-card">
 
-        <h1>Carbon Credit Trading</h1>
-        <p>Buy and sell carbon credits between establishments.</p>
+        <h2>Sell Carbon Credits</h2>
+        <p class="section-subtitle">
+            List your available carbon credits for sale.
+        </p>
 
-        <form method="POST">
+        <form action="/create-listing" method="POST">
 
             <div class="form-group">
-                <label for="seller">Seller</label>
+                <label>Seller</label>
 
-                <select name="seller_est_id" id="seller" required>
+                <select name="seller_est_id" required>
                     <option value="">Select Seller</option>
 
                     {% for establishment in establishments %}
@@ -276,63 +34,38 @@
                         {{ establishment.est_name }}
                     </option>
                     {% endfor %}
-
                 </select>
             </div>
 
 
             <div class="form-group">
-                <label for="buyer">Buyer</label>
-
-                <select name="buyer_est_id" id="buyer" required>
-                    <option value="">Select Buyer</option>
-
-                    {% for establishment in establishments %}
-                    <option value="{{ establishment.est_id }}">
-                        {{ establishment.est_name }}
-                    </option>
-                    {% endfor %}
-
-                </select>
-            </div>
-
-
-            <div class="form-group">
-                <label for="credit_amount">Credits to Trade</label>
+                <label>Credits to Sell</label>
 
                 <input
                     type="number"
-                    id="credit_amount"
                     name="credit_amount"
-                    step="0.01"
                     min="0.01"
-                    required
-                >
+                    step="0.01"
+                    placeholder="Credits"
+                    required>
             </div>
 
 
             <div class="form-group">
-                <label for="price_per_credit">Price per Credit (₹)</label>
+                <label>Price per Credit (₹)</label>
 
                 <input
                     type="number"
-                    id="price_per_credit"
                     name="price_per_credit"
+                    min="0.01"
                     step="0.01"
-                    min="0"
-                    required
-                >
-            </div>
-
-
-            <div class="total-box">
-                Total Transaction Value:
-                ₹<span id="total_amount">0.00</span>
+                    placeholder="Price"
+                    required>
             </div>
 
 
             <button type="submit">
-                Execute Trade
+                Create Listing
             </button>
 
         </form>
@@ -340,182 +73,141 @@
     </div>
 
 
-    <div class="trade-card wallet-section">
+    <!-- AI FORECAST -->
 
-        <h2>Credit Wallets</h2>
+    <div class="trade-card ai-card">
 
-        <table>
+        <div class="card-icon">🤖</div>
 
+        <h2>AI Market Forecast</h2>
+
+        {% if prediction.available %}
+
+            <div class="forecast-grid">
+
+                <div>
+                    <span>Current Price</span>
+                    <strong>₹{{ prediction.current_price }}</strong>
+                </div>
+
+                <div>
+                    <span>Predicted Price</span>
+                    <strong>₹{{ prediction.predicted_price }}</strong>
+                </div>
+
+                <div>
+                    <span>Model MAE</span>
+                    <strong>₹{{ prediction.mae }}</strong>
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="forecast-message">
+                {{ prediction.message }}
+            </div>
+
+        {% endif %}
+
+        <a href="/market" class="secondary-button">
+            View Market Analytics
+        </a>
+
+    </div>
+
+</div>
+
+<div class="trade-card wallet-section">
+
+    <div class="section-header">
+        <div>
+            <h2>Credit Wallet</h2>
+            <p>Current carbon credit holdings of each establishment.</p>
+        </div>
+    </div>
+
+    <div class="wallet-table-wrapper">
+        <table class="wallet-table">
             <thead>
                 <tr>
                     <th>Establishment</th>
                     <th>Available Credits</th>
                     <th>Reserved Credits</th>
+                    <th>Tradable Credits</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for wallet in wallets %}
+                <tr>
+                    <td>
+                        <strong>{{ wallet.est_name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(wallet.available_credit) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(wallet.reserved_credit) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ "%.2f"|format(
+                                wallet.available_credit - wallet.reserved_credit
+                            ) }}
+                        </strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<!-- MARKETPLACE -->
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Active Listings</h2>
+            <p>Carbon credits currently available for purchase.</p>
+        </div>
+
+    </div>
+
+
+    {% if listings %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Seller</th>
+                    <th>Credits Available</th>
+                    <th>Price / Credit</th>
+                    <th>Total Value</th>
+                    <th>Purchase</th>
                 </tr>
             </thead>
 
             <tbody>
 
-                {% for wallet in wallets %}
+                {% for listing in listings %}
 
                 <tr>
-                    <td>{{ wallet.est_name }}</td>
-                    <td>{{ "%.2f"|format(wallet.available_credit) }}</td>
-                    <td>{{ "%.2f"|format(wallet.reserved_credit) }}</td>
-                </tr>
 
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <section class="market-analytics">
-    <h2>Market Analytics</h2>
-
-    <div class="analytics-grid">
-        <div class="analytics-card">
-            <h3>Active Listings</h3>
-            <p>{{ active_listings }}</p>
-        </div>
-
-        <div class="analytics-card">
-            <h3>Credits Available</h3>
-            <p>{{ "%.2f"|format(credits_available) }}</p>
-        </div>
-
-        <div class="analytics-card">
-            <h3>Average Price</h3>
-            <p>₹{{ "%.2f"|format(average_price) }}</p>
-        </div>
-
-        <div class="analytics-card">
-            <h3>Highest Price</h3>
-            <p>₹{{ "%.2f"|format(highest_price) }}</p>
-        </div>
-
-        <div class="analytics-card">
-            <h3>Lowest Price</h3>
-            <p>₹{{ "%.2f"|format(lowest_price) }}</p>
-        </div>
-
-        <div class="analytics-card">
-            <h3>Total Traded Value</h3>
-            <p>₹{{ "%.2f"|format(total_trade_value) }}</p>
-        </div>
-    </div>
-        <div class="analytics-card market-trend-card">
-        <h3>Market Trend</h3>
-
-        <p>
-        ₹{{ "%.2f"|format(current_price) }}
-        </p>
-
-        <span class="trend-value">
-        {% if price_change > 1 %}
-            ▲ {{ "%.2f"|format(price_change) }}%
-        {% elif price_change < -1 %}
-            ▼ {{ "%.2f"|format(price_change|abs) }}%
-        {% else %}
-            → {{ "%.2f"|format(price_change|abs) }}%
-        {% endif %}
-        </span>
-
-        <small>{{ market_trend }}</small>
-        </div>
-    </section>
-
-    <section class="market-trend">
-    <h2>Carbon Credit Price Trend</h2>
-    <p class="section-subtitle">Historical prices from completed carbon credit transactions.</p>
-
-    <div class="chart-container">
-        <canvas id="priceChart"></canvas>
-    </div>
-    </section>
-
-    <div class="card">
-    <h2>Sell Carbon Credits</h2>
-    <p>List your available carbon credits for sale.</p>
-
-    <form action="/create-listing" method="POST">
-
-        <label>Seller</label>
-        <select name="seller_est_id" required>
-            <option value="">Select Seller</option>
-            {% for establishment in establishments %}
-                <option value="{{ establishment.est_id }}">
-                    {{ establishment.est_name }}
-                </option>
-            {% endfor %}
-        </select>
-
-        <label>Credits to Sell</label>
-        <input type="number"
-               name="credit_amount"
-               min="0.01"
-               step="0.01"
-               placeholder="Credits"
-               required>
-
-        <label>Price per Credit (₹)</label>
-        <input type="number"
-               name="price_per_credit"
-               min="0.01"
-               step="0.01"
-               placeholder="Price"
-               required>
-
-        <button type="submit">Create Listing</button>
-
-    </form>
-</div>
-
-    <div class="card marketplace-card">
-        <h2>Carbon Credit Marketplace</h2>
-        <p>Available carbon credits offered for sale.</p>
-
-        <div class="analytics-card">
-    <h3> AI Market Forecast</h3>
-
-    {% if prediction.available %}
-        <p>
-            <strong>Current Price:</strong>
-            ₹{{ prediction.current_price }}
-        </p>
-
-        <p>
-            <strong>Predicted Next Price:</strong>
-            ₹{{ prediction.predicted_price }}
-        </p>
-
-        <p>
-            <strong>Model MAE:</strong>
-            ₹{{ prediction.mae }}
-        </p>
-    {% else %}
-        <p>{{ prediction.message }}</p>
-    {% endif %}
-</div>
-
-        {% if listings %}
-        <table>
-        <thead>
-            <tr>
-                <th>Seller</th>
-                <th>Credits Available</th>
-                <th>Price / Credit</th>
-                <th>Total Value</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-            <tbody>
-                {% for listing in listings %}
-                    <tr>
-                <td>{{ listing.est_name }}</td>
+                    <td>
+                        <strong>{{ listing.est_name }}</strong>
+                    </td>
 
                     <td>
                         {{ "%.2f"|format(listing.remaining_credit) }}
@@ -526,161 +218,214 @@
                     </td>
 
                     <td>
-                        ₹{{ "%.2f"|format(listing.remaining_credit * listing.price_per_credit) }}
+                        ₹{{ "%.2f"|format(
+                            listing.remaining_credit *
+                            listing.price_per_credit
+                        ) }}
                     </td>
 
                     <td>
-                        <form action="/buy-credit" method="POST">
-    <input type="hidden" name="listing_id" value="{{ listing.listing_id }}">
 
-    <select name="buyer_est_id" required>
-        <option value="">Select Buyer</option>
-        {% for establishment in establishments %}
-            {% if establishment.est_id != listing.seller_est_id %}
-                <option value="{{ establishment.est_id }}">
-                    {{ establishment.est_name }}
-                </option>
-            {% endif %}
-        {% endfor %}
-    </select>
+                        <form
+                            action="/buy-credit"
+                            method="POST"
+                            class="buy-form">
 
-    <input type="number"
-           name="quantity"
-           min="0.01"
-           max="{{ listing.remaining_credit }}"
-           step="0.01"
-           placeholder="Credits"
-           required>
+                            <input
+                                type="hidden"
+                                name="listing_id"
+                                value="{{ listing.listing_id }}">
 
-    <button type="submit">Buy</button>
-</form>
+
+                            <select
+                                name="buyer_est_id"
+                                required>
+
+                                <option value="">
+                                    Buyer
+                                </option>
+
+                                {% for establishment in establishments %}
+
+                                    {% if establishment.est_id != listing.seller_est_id %}
+
+                                    <option value="{{ establishment.est_id }}">
+                                        {{ establishment.est_name }}
+                                    </option>
+
+                                    {% endif %}
+
+                                {% endfor %}
+
+                            </select>
+
+
+                            <input
+                                type="number"
+                                name="quantity"
+                                min="0.01"
+                                max="{{ listing.remaining_credit }}"
+                                step="0.01"
+                                placeholder="Credits"
+                                required>
+
+
+                            <button type="submit">
+                                Buy
+                            </button>
+
+                        </form>
+
                     </td>
-                    </tr>
-                    {% endfor %}
+
+                </tr>
+
+                {% endfor %}
+
             </tbody>
+
         </table>
 
-            {% else %}
-                <p>No active carbon-credit listings available.</p>
-                    {% endif %}
     </div>
 
-    <div class="card transaction-history">
-        <h2>Transaction History</h2>
+    {% else %}
 
-        {% if transactions %}
+    <div class="empty-state">
+
+        <h3>No active listings</h3>
+
+        <p>
+            There are currently no carbon credits available for purchase.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- TRANSACTION HISTORY -->
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Transaction History</h2>
+            <p>Recent carbon credit trades.</p>
+        </div>
+
+        <a href="/transactions" class="secondary-button">
+            View All
+        </a>
+
+    </div>
+
+
+    {% if transactions %}
+
+    <div class="table-container">
+
         <table>
+
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Seller</th>
                     <th>Buyer</th>
                     <th>Credits</th>
                     <th>Price / Credit</th>
                     <th>Total Value</th>
                     <th>Status</th>
-                    <th>Date</th>
                 </tr>
             </thead>
 
             <tbody>
+
                 {% for transaction in transactions %}
+
                 <tr>
-                    <td>{{ transaction.transaction_id }}</td>
+
                     <td>{{ transaction.seller }}</td>
+
                     <td>{{ transaction.buyer }}</td>
+
                     <td>{{ transaction.credit_amount }}</td>
-                    <td>₹{{ transaction.price_per_credit }}</td>
-                    <td>₹{{ transaction.total_amount }}</td>
-                    <td>{{ transaction.status }}</td>
-                    <td>{{ transaction.created_at }}</td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(transaction.price_per_credit) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ₹{{ "%.2f"|format(transaction.total_amount) }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <span class="status-badge">
+                            {{ transaction.status }}
+                        </span>
+                    </td>
+
                 </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
 
-        {% else %}
-        <p>No transactions yet.</p>
-        {% endif %}
     </div>
+
+    {% else %}
+
+    <div class="empty-state">
+        <p>No transactions found.</p>
+    </div>
+
+    {% endif %}
 
 </div>
 
 
-<script>
+<!-- MARKET ANALYTICS -->
 
-const creditInput = document.getElementById("credit_amount");
-const priceInput = document.getElementById("price_per_credit");
-const totalDisplay = document.getElementById("total_amount");
+<div class="data-card">
 
-function calculateTotal() {
+    <div class="card-header">
 
-    const credits = parseFloat(creditInput.value) || 0;
-    const price = parseFloat(priceInput.value) || 0;
+        <div>
+            <h2>Market Snapshot</h2>
+            <p>Current marketplace statistics.</p>
+        </div>
 
-    const total = credits * price;
+        <a href="/market" class="secondary-button">
+            Full Analytics
+        </a>
 
-    totalDisplay.textContent = total.toFixed(2);
-}
-
-creditInput.addEventListener("input", calculateTotal);
-priceInput.addEventListener("input", calculateTotal);
-
-</script>
-
-<!-- chart.js da -->    
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const priceDates = {{ market_dates | tojson }};
-const priceValues = {{ market_prices | tojson }};
-
-const ctx = document.getElementById('priceChart');
-
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: priceDates,
-        datasets: [{
-            label: 'Daily Average Price (₹)',
-            data: priceValues,
-            tension: 0.3,
-            borderWidth: 3,
-            fill: false
-        },
-        {
-            label: '3-Period Moving Average',
-            data: {{ moving_average | tojson }},
-            tension: 0.3,
-            borderWidth: 2,
-            fill: false
-        }
-    ]
-    
-    },
+    </div>
 
 
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: false,
-                title: {
-                    display: true,
-                    text: 'Price (₹)'
-                }
-            },
-            x: {
-                title: {
-                    display: true,
-                    text: 'Transaction Date'
-                }
-            }
-        }
-    }
-});
-</script>
+    <div class="analytics-grid">
 
-</body>
-</html>
+        <div class="analytics-card">
+            <span>Active Listings</span>
+            <strong>{{ active_listings }}</strong>
+        </div>
+
+        <div class="analytics-card">
+            <span>Credits Available</span>
+            <strong>{{ credits_available }}</strong>
+        </div>
+
+        <div class="analytics-card">
+            <span>Average Price</span>
+            <strong>₹{{ "%.2f"|format(average_price) }}</strong>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
