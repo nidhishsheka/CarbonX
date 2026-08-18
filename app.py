@@ -1,3 +1,16 @@
+# Dear programmer:
+# When I wrote this code, only god and // I knew how it worked.
+# Now, only god knows it!
+# Therefore, if you are trying to optimize
+# this routine and it fails (most surely),
+# please increase this counter as a
+# warning for the next person:
+
+# total hours wasted here = 47
+
+
+#6174_hn.sheka
+
 import sqlite3
 from flask import Flask, render_template, request, redirect
 from ml_model import get_price_prediction
