@@ -15,7 +15,7 @@ def get_price_prediction():
 
     conn.close()
 
-    if len(df) < 10:
+    if len(df) < 5:
         return {
             "available": False,
             "message": f"Need more historical data. Currently have {len(df)} trading periods."

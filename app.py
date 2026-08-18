@@ -10,6 +10,111 @@ def get_db():
     return conn
 
 
+def ensure_wallet_system(conn):
+    """Create/upgrade wallet bookkeeping without disturbing trading data."""
+    columns = [row["name"] for row in conn.execute("PRAGMA table_info(Credit_Wallet)").fetchall()]
+
+    if "generated_credit" not in columns:
+        conn.execute("""
+            ALTER TABLE Credit_Wallet
+            ADD COLUMN generated_credit REAL NOT NULL DEFAULT 0
+        """)
+
+    # Every establishment gets both a credit row and a wallet row.
+    conn.execute("""
+        INSERT OR IGNORE INTO Carbon_Credit (est_id, credit, status)
+        SELECT est_id, 0, 'Neutral'
+        FROM Establishment
+    """)
+    conn.execute("""
+        INSERT OR IGNORE INTO Credit_Wallet (est_id, available_credit, reserved_credit, generated_credit)
+        SELECT est_id, 0, 0, 0
+        FROM Establishment
+    """)
+
+    # Reconcile existing data once:
+    # generated credits = current positive carbon-credit balance.
+    # available wallet = generated credits + net purchased/sold credits.
+    conn.execute("""
+        UPDATE Credit_Wallet
+        SET generated_credit = COALESCE((
+            SELECT MAX(COALESCE(cc.credit, 0), 0)
+            FROM Carbon_Credit cc
+            WHERE cc.est_id = Credit_Wallet.est_id
+        ), 0)
+    """)
+
+    conn.execute("""
+        UPDATE Credit_Wallet
+        SET available_credit = MAX(
+            reserved_credit,
+            generated_credit + COALESCE((
+                SELECT SUM(
+                    CASE
+                        WHEN cl.transaction_type = 'Credit Purchase' THEN cl.change_amount
+                        WHEN cl.transaction_type = 'Credit Sale' THEN cl.change_amount
+                        ELSE 0
+                    END
+                )
+                FROM Credit_Ledger cl
+                WHERE cl.est_id = Credit_Wallet.est_id
+            ), 0)
+        ),
+        updated_at = CURRENT_TIMESTAMP
+    """)
+
+    # Replace the old trigger: Carbon_Credit changes now update the wallet too.
+    conn.execute("DROP TRIGGER IF EXISTS log_credit_change")
+    conn.execute("DROP TRIGGER IF EXISTS sync_wallet_from_credit")
+
+    conn.execute("""
+        CREATE TRIGGER sync_wallet_from_credit
+        AFTER UPDATE OF credit ON Carbon_Credit
+        FOR EACH ROW
+        WHEN ROUND(COALESCE(NEW.credit, 0) - COALESCE(OLD.credit, 0), 10) != 0
+        BEGIN
+            INSERT INTO Credit_Ledger
+                (est_id, change_amount, transaction_type, description)
+            VALUES
+                (
+                    NEW.est_id,
+                    ROUND(
+                        MAX(COALESCE(NEW.credit, 0), 0)
+                        - MAX(COALESCE(OLD.credit, 0), 0),
+                        10
+                    ),
+                    'Emission Adjustment',
+                    'Generated carbon-credit balance changed after emission recalculation'
+                );
+
+            UPDATE Credit_Wallet
+            SET
+                generated_credit = MAX(COALESCE(NEW.credit, 0), 0),
+                available_credit = MAX(
+                    reserved_credit,
+                    available_credit
+                    + (
+                        MAX(COALESCE(NEW.credit, 0), 0)
+                        - MAX(COALESCE(OLD.credit, 0), 0)
+                    )
+                ),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE est_id = NEW.est_id;
+        END
+    """)
+
+    conn.commit()
+
+
+def initialize_database():
+    conn = get_db()
+    ensure_wallet_system(conn)
+    conn.close()
+
+
+initialize_database()
+
+
 @app.route("/")
 def dashboard():
 
@@ -67,6 +172,18 @@ def add_establishment():
     "INSERT INTO Baseline_Emission (est_id, baseline_emission_kg, baseline_year) VALUES (?,?,?)",
     (est_id, baseline, baseline_year)
 )
+
+        conn.execute(
+            "INSERT INTO Carbon_Credit (est_id, credit, status) VALUES (?, 0, 'Neutral')",
+            (est_id,)
+        )
+
+        conn.execute(
+            """INSERT INTO Credit_Wallet
+               (est_id, available_credit, reserved_credit, generated_credit)
+               VALUES (?, 0, 0, 0)""",
+            (est_id,)
+        )
 
         conn.commit()
 
