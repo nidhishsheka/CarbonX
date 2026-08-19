@@ -24,7 +24,7 @@ def get_db():
 
 
 def ensure_wallet_system(conn):
-    """Create/upgrade wallet bookkeeping without disturbing trading data."""
+    
     columns = [row["name"] for row in conn.execute("PRAGMA table_info(Credit_Wallet)").fetchall()]
 
     if "generated_credit" not in columns:
@@ -33,7 +33,7 @@ def ensure_wallet_system(conn):
             ADD COLUMN generated_credit REAL NOT NULL DEFAULT 0
         """)
 
-    # Every establishment gets both a credit row and a wallet row.
+    # prathi est.g onji credit row n wallet riw thikkund
     conn.execute("""
         INSERT OR IGNORE INTO Carbon_Credit (est_id, credit, status)
         SELECT est_id, 0, 'Neutral'
@@ -45,8 +45,6 @@ def ensure_wallet_system(conn):
         FROM Establishment
     """)
 
-    # Reconcile existing data once:
-    # generated credits = current positive carbon-credit balance.
     # available wallet = generated credits + net purchased/sold credits.
     conn.execute("""
         UPDATE Credit_Wallet
@@ -76,7 +74,6 @@ def ensure_wallet_system(conn):
         updated_at = CURRENT_TIMESTAMP
     """)
 
-    # Replace the old trigger: Carbon_Credit changes now update the wallet too.
     conn.execute("DROP TRIGGER IF EXISTS log_credit_change")
     conn.execute("DROP TRIGGER IF EXISTS sync_wallet_from_credit")
 
@@ -378,9 +375,27 @@ def trade():
         conn.close()
         return redirect("/trade")
 
-    establishments = conn.execute("SELECT est_id,est_name FROM Establishment ORDER BY est_name").fetchall()
+    establishments = conn.execute(
+    """
+    SELECT est_id, est_name
+    FROM Establishment
+    ORDER BY est_name
+    """
+    ).fetchall()
 
-    wallets = conn.execute("SELECT cw.est_id,e.est_name,cw.available_credit,cw.reserved_credit FROM Credit_Wallet cw JOIN Establishment e ON cw.est_id=e.est_id ORDER BY e.est_name").fetchall()
+    wallets = conn.execute(
+    """
+    SELECT
+        cw.est_id,
+        e.est_name,
+        cw.available_credit,
+        cw.reserved_credit
+    FROM Credit_Wallet cw
+    JOIN Establishment e
+        ON cw.est_id = e.est_id
+    ORDER BY e.est_name
+    """
+    ).fetchall()
 
     transactions = conn.execute("""
     SELECT ct.transaction_id,
@@ -396,30 +411,106 @@ def trade():
     JOIN Establishment b ON ct.buyer_est_id = b.est_id
     ORDER BY ct.created_at DESC
     LIMIT 3
-""").fetchall()
+    """).fetchall()
 
-    listings = conn.execute("SELECT cl.listing_id,cl.seller_est_id,e.est_name,cl.credit_amount,cl.remaining_credit,cl.price_per_credit,cl.status,cl.created_at FROM Credit_Listing cl JOIN Establishment e ON cl.seller_est_id=e.est_id WHERE cl.status='Active' AND cl.remaining_credit>0 ORDER BY cl.created_at DESC").fetchall()
+    listings = conn.execute(
+    """
+    SELECT
+        cl.listing_id,
+        cl.seller_est_id,
+        e.est_name,
+        cl.credit_amount,
+        cl.remaining_credit,
+        cl.price_per_credit,
+        cl.status,
+        cl.created_at
+    FROM Credit_Listing cl
+    JOIN Establishment e
+        ON cl.seller_est_id = e.est_id
+    WHERE cl.status = 'Active'
+      AND cl.remaining_credit > 0
+    ORDER BY cl.created_at DESC
+    """
+    ).fetchall()
 
-    active_listings = conn.execute("SELECT COUNT(*) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+    active_listings = conn.execute(
+    """
+    SELECT COUNT(*)
+    FROM Credit_Listing
+    WHERE status = 'Active'
+    """
+    ).fetchone()[0]
 
-    credits_available = conn.execute("SELECT COALESCE(SUM(remaining_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+    credits_available = conn.execute(
+    """
+    SELECT COALESCE(SUM(remaining_credit), 0)
+    FROM Credit_Listing
+    WHERE status = 'Active'
+    """
+    ).fetchone()[0]
 
-    average_price = conn.execute("SELECT COALESCE(AVG(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+    average_price = conn.execute(
+    """
+    SELECT COALESCE(AVG(price_per_credit), 0)
+    FROM Credit_Listing
+    WHERE status = 'Active'
+    """
+    ).fetchone()[0]
 
-    highest_price = conn.execute("SELECT COALESCE(MAX(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+    highest_price = conn.execute(
+    """
+    SELECT COALESCE(MAX(price_per_credit), 0)
+    FROM Credit_Listing
+    WHERE status = 'Active'
+    """
+    ).fetchone()[0]
 
-    lowest_price = conn.execute("SELECT COALESCE(MIN(price_per_credit),0) FROM Credit_Listing WHERE status='Active'").fetchone()[0]
+    lowest_price = conn.execute(
+    """
+    SELECT COALESCE(MIN(price_per_credit), 0)
+    FROM Credit_Listing
+    WHERE status = 'Active'
+    """
+    ).fetchone()[0]
 
-    total_trade_value = conn.execute("SELECT COALESCE(SUM(total_amount),0) FROM Credit_Transaction WHERE status='Completed'").fetchone()[0]
+    total_trade_value = conn.execute(
+    """
+    SELECT COALESCE(SUM(total_amount), 0)
+    FROM Credit_Transaction
+    WHERE status = 'Completed'
+    """
+    ).fetchone()[0]
 
     prediction = get_price_prediction()
 
-    price_history = conn.execute("SELECT created_at, price_per_credit, credit_amount, total_amount FROM Credit_Transaction WHERE status='Completed' ORDER BY created_at ASC").fetchall()
-
+    price_history = conn.execute(
+    """
+    SELECT
+        created_at,
+        price_per_credit,
+        credit_amount,
+        total_amount
+    FROM Credit_Transaction
+    WHERE status = 'Completed'
+    ORDER BY created_at ASC
+    """
+    ).fetchall()
     price_dates = [row["created_at"] for row in price_history]
     price_values = [row["price_per_credit"] for row in price_history]
 
-    daily_market = conn.execute("SELECT DATE(created_at) AS trade_date, ROUND(AVG(price_per_credit),2) AS avg_price, SUM(credit_amount) AS credits_traded, ROUND(SUM(total_amount),2) AS trade_value FROM Credit_Transaction WHERE status='Completed' GROUP BY DATE(created_at) ORDER BY trade_date ASC").fetchall()
+    daily_market = conn.execute(
+    """
+    SELECT
+        DATE(created_at) AS trade_date,
+        ROUND(AVG(price_per_credit), 2) AS avg_price,
+        SUM(credit_amount) AS credits_traded,
+        ROUND(SUM(total_amount), 2) AS trade_value
+    FROM Credit_Transaction
+    WHERE status = 'Completed'
+    GROUP BY DATE(created_at)
+    ORDER BY trade_date ASC
+    """
+    ).fetchall()
 
     market_dates = [row["trade_date"] for row in daily_market]
     market_prices = [row["avg_price"] for row in daily_market]
@@ -589,11 +680,61 @@ def buy_credit():
 
         total_amount = quantity * listing["price_per_credit"]
 
-        conn.execute("INSERT INTO Credit_Transaction (seller_est_id,buyer_est_id,credit_amount,price_per_credit,total_amount) VALUES (?,?,?,?,?)", (listing["seller_est_id"],buyer_est_id,quantity,listing["price_per_credit"],total_amount))
+        conn.execute(
+            """
+            INSERT INTO Credit_Transaction (
+                seller_est_id,
+                buyer_est_id,
+                credit_amount,
+                price_per_credit,
+                total_amount
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                listing["seller_est_id"],
+                buyer_est_id,
+                quantity,
+                listing["price_per_credit"],
+                total_amount
+            )
+        )
 
-        conn.execute("UPDATE Credit_Listing SET remaining_credit=remaining_credit-?,status=CASE WHEN remaining_credit-?=0 THEN 'Sold' ELSE 'Active' END WHERE listing_id=? AND status='Active' AND remaining_credit>=?", (quantity,quantity,listing_id,quantity))
+        conn.execute(
+            """
+            UPDATE Credit_Listing
+            SET
+                remaining_credit = remaining_credit - ?,
+                status = CASE
+                    WHEN remaining_credit - ? = 0
+                        THEN 'Sold'
+                    ELSE 'Active'
+                END
+            WHERE listing_id = ?
+                AND status = 'Active'
+                AND remaining_credit >= ?
+            """,
+            (
+                quantity,
+                quantity,
+                listing_id,
+                quantity
+            )
+        )
 
-        conn.execute("UPDATE Credit_Wallet SET reserved_credit=reserved_credit-?,updated_at=CURRENT_TIMESTAMP WHERE est_id=?", (quantity,listing["seller_est_id"]))
+        conn.execute(
+            """
+            UPDATE Credit_Wallet
+            SET
+                reserved_credit = reserved_credit - ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE est_id = ?
+            """,
+            (
+                quantity,
+                listing["seller_est_id"]
+            )
+        )
 
         update_market_history(conn)
         conn.commit()
@@ -619,7 +760,16 @@ def create_listing():
         if credit_amount <= 0 or price_per_credit <= 0:
             return "Invalid listing values", 400
 
-        wallet = conn.execute("SELECT available_credit,reserved_credit FROM Credit_Wallet WHERE est_id=?", (seller_est_id,)).fetchone()
+        wallet = conn.execute(
+            """
+            SELECT
+                available_credit,
+                reserved_credit
+            FROM Credit_Wallet
+            WHERE est_id = ?
+            """,
+            (seller_est_id,)
+        ).fetchone()
 
         if wallet is None:
             return "Seller wallet not found", 404
@@ -629,9 +779,37 @@ def create_listing():
         if unreserved_credit < credit_amount:
             return "Insufficient unreserved credits", 400
 
-        conn.execute("INSERT INTO Credit_Listing (seller_est_id,credit_amount,remaining_credit,price_per_credit) VALUES (?,?,?,?)", (seller_est_id,credit_amount,credit_amount,price_per_credit))
+        conn.execute(
+            """
+            INSERT INTO Credit_Listing (
+                seller_est_id,
+                credit_amount,
+                remaining_credit,
+                price_per_credit
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                seller_est_id,
+                credit_amount,
+                credit_amount,
+                price_per_credit
+            )
+        )
 
-        conn.execute("UPDATE Credit_Wallet SET reserved_credit=reserved_credit+?,updated_at=CURRENT_TIMESTAMP WHERE est_id=?", (credit_amount,seller_est_id))
+        conn.execute(
+            """
+            UPDATE Credit_Wallet
+            SET
+                reserved_credit = reserved_credit + ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE est_id = ?
+            """,
+            (
+                credit_amount,
+                seller_est_id
+            )
+        )
 
         conn.commit()
 
